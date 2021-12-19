@@ -3,28 +3,50 @@ import type { NextPage } from 'next'
 import { useContext, useEffect } from 'react'
 import MapBox from 'components/mapbox'
 import mapboxgl from 'mapbox-gl';
+import { getData } from 'fetcher';
+
+
+const getPopup = ({ imgUrl, address, price }: {
+  imgUrl: string;
+  address: string;
+  price: string;
+}): string => {
+
+  return `
+  <div>
+    <div>
+      <img style='margin: auto;' width='200' src=${imgUrl} alt="" />
+    </div>
+    <p>${address}</p>
+    <p style='color: #ef7733;'>${price}/tháng</p>
+  </div>
+`
+}
 
 const Home: NextPage = () => {
   const { map } = useContext(AppContext)
   useEffect(() => {
     if (map) {
-      const marker1 = new mapboxgl.Marker()
-        .setLngLat([106.6297, 10.8231])
-        .addTo(map);
-  
-      // Create a default Marker, colored black, rotated 45 degrees.
-      const marker2 = new mapboxgl.Marker({ color: 'black', rotation: 45 })
-        .setLngLat([105.6297, 10.8231])
-        .addTo(map);
+      getData().then(res => {
+        if (res) {
+          res.forEach(r => {
+            const popup = new mapboxgl.Popup({ closeOnClick: false })
+              .setLngLat(r.center)
+              .setHTML(getPopup({ address: r.address, imgUrl: r.imgUrl, price: r.price }))
+              .addTo(map);
+            const marker1 = new mapboxgl.Marker()
+              .setLngLat(r.center)
+              .setPopup(popup)
+              .togglePopup()
+              .addTo(map);
+          })
+        }
+      })
     }
   }, [map])
 
   return (
-    <div>
-      <main>
-        <MapBox />
-      </main>
-    </div>
+    <MapBox />
   )
 }
 
